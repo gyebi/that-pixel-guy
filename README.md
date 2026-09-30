@@ -1,37 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# That Pixel Guy — Photography MVP
 
-## Getting Started
+A premium photography client-experience MVP for **That Pixel Guy**. The app includes a public portfolio, integrated photographer Admin area, and a simulated client-gallery access layer.
 
-First, run the development server:
+## Run locally
+
+Requires Node.js 22+ and npm.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev -- --webpack
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open the local URL printed by Next.js. Use the webpack flag in this environment because Turbopack cannot start its CSS worker under the managed sandbox.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build -- --webpack
+```
 
-## Learn More
+## Demo routes
 
-To learn more about Next.js, take a look at the following resources:
+- `/` — public website
+- `/portfolio`, `/services`, `/about`, `/journal`, `/contact` — public content routes
+- `/admin` — integrated photographer dashboard
+- `/admin/site` — session-only homepage editor demonstration
+- `/client-login` — choose a demo client
+- `/client` — restricted client area
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The client demo uses a short-lived HttpOnly cookie. It is only an MVP authorization simulation; it is not production authentication.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Assets
 
-## Deploy on Vercel
+Brand files are stored in [`public/brand`](public/brand). Photography currently uses temporary Unsplash placeholders while the authorized Pixieset photography export is unavailable to the project. Do not add unapproved stock images as replacements.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+When the approved source export arrives, organize images as follows:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# that-pixel-guy
+```text
+public/images/
+  portfolio/
+    graduations/
+    portraits/
+    events/
+  journal/
+  demo-galleries/
+    client-a/
+    client-b/
+  frame-studio/rooms/
+```
+
+See [`documentation/tasks/MVP_TASKS.md`](documentation/tasks/MVP_TASKS.md) for curation and owner tasks.
+
+## Firebase and GitHub delivery
+
+The intended deployment path is **Firebase App Hosting** connected to this GitHub repository. Do not commit Firebase credentials, service-account keys, or `.env` files. The Firebase project, billing/region choice, and App Hosting connection remain owner tasks.
+
+## MVP boundary
+
+This MVP intentionally uses TypeScript domain types, repository interfaces, and mock/session state only.
+
+Do **not** introduce a production database, Prisma, SQL, migrations, Firestore, Firebase Authentication, payment gateway, production media storage, or external CMS without a separate approved architecture decision.
+
+## Repository workflow
+
+1. Keep changes focused and run the quality checks above.
+2. Commit clear, small changes to `main` or a feature branch.
+3. Push to GitHub.
+4. After Firebase App Hosting is connected, GitHub pushes to the chosen live branch can trigger deployment.

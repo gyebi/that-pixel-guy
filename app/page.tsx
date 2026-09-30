@@ -1,69 +1,61 @@
+import Link from "next/link";
 import Image from "next/image";
+import { business, journalPosts, portfolioCategories, testimonials } from "@/lib/site-content";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main>
+      <section className="hero">
+        <nav className="site-nav content-width" aria-label="Main navigation">
+          <Link href="/" className="brand-lockup brand-lockup--hero" aria-label={`${business.name} home`}>
+            <Image src={business.logos.enlargedMark} alt="" width={704} height={736} priority />
+            <span>{business.name}</span>
+          </Link>
+          <div className="nav-links">
+            <a href="#work">Work</a><a href="#about">About</a><a href="#journal">Journal</a><a href="#contact">Contact</a>
+          </div>
+          <Link href="/client-login" className="nav-login">Client login <Arrow /></Link>
+        </nav>
+        <div className="hero-copy content-width">
+          <p className="eyebrow light-eyebrow">Accra · Ghana · Available worldwide</p>
+          <h1>Photographs with<br />a pulse.</h1>
+          <p className="hero-intro">Honest, artful photography for the occasions and people you never want to forget.</p>
+          <a href="#contact" className="text-link light-link">Begin your story <Arrow /></a>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <a href="#work" className="scroll-cue" aria-label="Scroll to selected work"><span>Scroll to explore</span><i /></a>
+      </section>
+
+      <section className="intro-section content-width" id="about">
+        <p className="eyebrow">The Pixel Guy approach</p>
+        <div className="intro-grid">
+          <h2>Where feeling<br />becomes form.</h2>
+          <div className="intro-copy"><p>The best photographs don&apos;t ask you to perform. They make room for you to be there—fully, beautifully, and without hurry.</p><a href="#contact" className="text-link">Meet the Pixel Guy <Arrow /></a></div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="selected-work" id="work">
+        <div className="section-heading content-width"><div><p className="eyebrow">Selected work</p><h2>Stories worth returning to.</h2></div><a href="#portfolio" className="text-link">View all work <Arrow /></a></div>
+        <div className="portfolio-grid content-width" id="portfolio">
+          {portfolioCategories.map((category) => <a className={`portfolio-card ${category.className}`} href={`/portfolio/${category.name.toLowerCase()}`} key={category.name} style={{ backgroundImage: `url(${category.image})` }}><span className="portfolio-wash" /><span className="portfolio-caption"><strong>{category.name}</strong><em>{category.count}</em></span></a>)}
+        </div>
+      </section>
+
+      <section className="services-section content-width">
+        <div className="service-image" role="img" aria-label="Bride holding a bouquet on her wedding day" />
+        <div className="service-copy"><p className="eyebrow">For the remarkable days</p><h2>Be in the moment.<br />I&apos;ll hold onto it.</h2><p>From joyful gatherings to quiet milestones, every session is considered with care and made to feel unmistakably yours.</p><div className="service-list"><a href="/services"><span>01</span> Weddings <Arrow /></a><a href="/services"><span>02</span> Portraits <Arrow /></a><a href="/services"><span>03</span> Families <Arrow /></a></div></div>
+      </section>
+
+      <section className="testimonial-section"><div className="content-width testimonial-wrap"><p className="eyebrow light-eyebrow">Kind words</p><blockquote>“{testimonials[0].quote}”</blockquote><p className="testimonial-credit">{testimonials[0].name} <span>/</span> {testimonials[0].occasion}</p><div className="testimonial-dots" aria-label="Testimonial 1 of 2"><i className="active" /><i /></div></div></section>
+
+      <section className="journal-section content-width" id="journal">
+        <div className="section-heading"><div><p className="eyebrow">From the journal</p><h2>Notes on love &amp; living.</h2></div><Link href="/journal" className="text-link">Read the journal <Arrow /></Link></div>
+        <div className="journal-grid">{journalPosts.map((post) => <article className="journal-card" key={post.title}><Link className="journal-image" href="/journal" style={{ backgroundImage: `url(${post.image})` }} aria-label={post.title} /><p className="post-meta">{post.category} <span>·</span> {post.date}</p><h3><Link href="/journal">{post.title}</Link></h3><Link href="/journal" className="text-link small-link">Read story <Arrow /></Link></article>)}</div>
+      </section>
+
+      <section className="contact-section" id="contact"><div className="content-width contact-wrap"><p className="eyebrow">Let&apos;s make something beautiful</p><h2>Tell me what<br />you&apos;re dreaming of.</h2><a href={`mailto:${business.email}`} className="button-link">Start a conversation <Arrow /></a></div></section>
+      <footer className="site-footer"><div className="content-width footer-grid"><Image className="footer-full-logo" src={business.logos.full} alt={business.name} width={703} height={736} /><div><p>Based in {business.location}</p><a href={`mailto:${business.email}`}>{business.email}</a></div><div><a href="#">Instagram</a><a href="#">Pinterest</a></div><p className="copyright">© {new Date().getFullYear()} {business.name}</p></div></footer>
+    </main>
   );
 }
+
+function Arrow() { return <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h13M11 4l6 6-6 6" /></svg>; }

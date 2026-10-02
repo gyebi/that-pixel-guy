@@ -33,7 +33,7 @@ The client demo uses a short-lived HttpOnly cookie. It is only an MVP authorizat
 
 ## Assets
 
-Brand files are stored in [`public/brand`](public/brand). Photography currently uses temporary Unsplash placeholders while the authorized Pixieset photography export is unavailable to the project. Do not add unapproved stock images as replacements.
+Brand files are stored in [`public/brand`](public/brand). Curated, approved That Pixel Guy photography is stored in [`public/images`](public/images). Unsplash placeholders remain only for content types not represented by the approved export; do not add unapproved stock images as replacements.
 
 When the approved source export arrives, organize images as follows:
 

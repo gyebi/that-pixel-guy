@@ -36,6 +36,20 @@ export const clientRepository = {
   async getById(id: string) {
     return prisma.client.findUnique({
       where: { id },
+      include: {
+        shoots: {
+          orderBy: {
+            date: "desc",
+          },
+          include: {
+            galleries: {
+              orderBy: {
+                createdAt: "desc",
+              },
+            },
+          },
+        },
+      },
     });
   },
 

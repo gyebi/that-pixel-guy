@@ -1,15 +1,87 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin-shell";
-import { demoRepository } from "@/lib/demo-repository";
+import { galleryRepository } from "@/lib/repositories/gallery-repository";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
 export default async function AdminGalleryPage({ params }: Props) {
   const { id } = await params;
-  const gallery = await demoRepository.getGallery(id);
-  if (!gallery) notFound();
-  const photos = await demoRepository.getPhotosForGallery(gallery.id);
-  const coverPhoto = photos.find((photo) => photo.id === gallery.coverPhotoId) ?? photos[0];
-  return <><AdminPageHeader eyebrow="Private gallery" title={gallery.name} action={<button className="admin-button">Edit gallery</button>} /><section className="client-detail"><div className="client-detail__cover" style={{ backgroundImage: `url(${coverPhoto?.imagePath})` }} /><div><p className="admin-eyebrow">{photos.length} photographs</p><h2>Gallery details</h2><dl><div><dt>Gallery access</dt><dd>{gallery.status} · expires {gallery.expiresOn}</dd></div><div><dt>Downloads</dt><dd>{gallery.downloadsEnabled ? "Enabled" : "Disabled"}</dd></div><div><dt>Client access</dt><dd>Restricted through the demo authorization layer</dd></div></dl><Link className="admin-button" href="/admin/clients">Back to clients</Link></div></section></>;
+
+  const gallery = await galleryRepository.getById(id);
+
+  if (!gallery) {
+    notFound();
+  }
+
+  const photos = gallery.photos;
+
+  return (
+    <>
+      <AdminPageHeader
+        eyebrow="Private gallery"
+        title={gallery.name}
+        action={
+          <button className="admin-button">
+            Edit gallery
+          </button>
+        }
+      />
+
+      <section className="client-detail">
+        <div className="client-detail__cover" />
+
+        <div>
+          <p className="admin-eyebrow">
+            {photos.length} {photos.length === 1 ? "photograph" : "photographs"}
+          </p>
+
+          <h2>Gallery details</h2>
+
+          <dl>
+            <div>
+              <dt>Client</dt>
+              <dd>{gallery.shoot.client.name}</dd>
+            </div>
+
+            <div>
+              <dt>Shoot</dt>
+              <dd>{gallery.shoot.name}</dd>
+            </div>
+
+            <div>
+              <dt>Gallery access</dt>
+              <dd>
+                {gallery.status}
+                {gallery.expiresOn
+                  ? ` · expires ${gallery.expiresOn.toLocaleDateString()}`
+                  : " · no expiration"}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Downloads</dt>
+              <dd>
+                {gallery.downloadsEnabled ? "Enabled" : "Disabled"}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Client access</dt>
+              <dd>Private gallery</dd>
+            </div>
+          </dl>
+
+          <Link
+            className="admin-button"
+            href={`/admin/clients/${gallery.shoot.client.id}`}
+          >
+            Back to client
+          </Link>
+        </div>
+      </section>
+    </>
+  );
 }

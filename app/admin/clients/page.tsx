@@ -12,8 +12,11 @@ export default async function AdminClientsPage() {
       <AdminPageHeader
         eyebrow="Clients"
         title="Your people"
-        action={<button className="admin-button">+ New client</button>}
-      />
+        action={
+          <Link className="admin-button" href="/admin/clients/new">
+            + New client
+          </Link>
+        } />
 
       <section className="client-table admin-panel">
         <div className="client-table__heading">

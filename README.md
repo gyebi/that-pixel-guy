@@ -62,6 +62,17 @@ This MVP intentionally uses TypeScript domain types, repository interfaces, and 
 
 Do **not** introduce a production database, Prisma, SQL, migrations, Firestore, Firebase Authentication, payment gateway, production media storage, or external CMS without a separate approved architecture decision.
 
+## Approved gallery architecture
+
+```text
+Client -> Shoot -> Photo
+                 -> Gallery -> GalleryPhoto -> Photo
+```
+
+Clients have shoots. Photos belong to a shoot and hold photograph metadata plus a current image reference; they are not image-byte records. Galleries also belong to a shoot and curate those photos through `GalleryPhoto`, which provides gallery-specific ordering and permits a photo to appear in more than one gallery without duplication.
+
+The demo repository uses authorized local files in `public/images` as temporary photo references. In production, actual image files will live in dedicated image/object storage. Database persistence and storage-provider selection remain deferred.
+
 ## Repository workflow
 
 1. Keep changes focused and run the quality checks above.

@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  initials  String
+  email     String   @unique
+  image     String?
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  shoots Shoot[]
+}
+
+model Shoot {
+  id        String   @id @default(cuid())
+  clientId  String
+  name      String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  photos    Photo[]
+  galleries Gallery[]
+}
+
+model Photo {
+  id               String   @id @default(cuid())
+  shootId          String
+  originalFilename String
+  mediaKey         String
+  width            Int
+  height           Int
+  altText          String
+  sortOrder        Int      @default(0)
+  status           String   @default("Visible")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  shoot         Shoot          @relation(fields: [shootId], references: [id], onDelete: Cascade)
+  galleryPhotos GalleryPhoto[]
+
+  @@index([shootId])
+}
+
+model Gallery {
+  id               String    @id @default(cuid())
+  shootId          String
+  name             String
+  expiresOn        DateTime?
+  downloadsEnabled Boolean   @default(false)
+  status           String    @default("Active")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  shoot  Shoot          @relation(fields: [shootId], references: [id], onDelete: Cascade)
+  photos GalleryPhoto[]
+
+  @@index([shootId])
+}
+
+model GalleryPhoto {
+  id        String @id @default(cuid())
+  galleryId String
+  photoId   String
+  position  Int
+
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  photo   Photo   @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@unique([galleryId, photoId])
+  @@unique([galleryId, position])
+  @@index([photoId])
+}

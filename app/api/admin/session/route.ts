@@ -11,10 +11,15 @@ export async function POST(request: NextRequest) {
   try {
     const origin = request.headers.get("origin");
 
-    if (origin !== request.nextUrl.origin) {
+    const allowedOrigins = new Set([
+      "http://localhost:3000",
+      "https://that-pixel-guy--itconferencegh.us-east4.hosted.app",
+    ]);
+
+    if (!origin || !allowedOrigins.has(origin)) {
       return NextResponse.json(
         { error: "Invalid request origin." },
-        { status: 403 },
+        { status: 403 }
       );
     }
 

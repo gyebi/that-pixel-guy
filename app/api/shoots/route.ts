@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
 import { clientRepository } from "@/lib/repositories/client-repository";
 import { shootRepository } from "@/lib/repositories/shoot-repository";
+import { getAdminSession } from "@/lib/auth/require-admin";
+
 
 export async function POST(request: Request) {
+
+  const admin = await getAdminSession();
+
+  if (!admin) {
+    return Response.json(
+      { error: "Unauthorized. Photographer login required." },
+      { status: 401 }
+    );
+  }
+
   const body = await request.json();
 
   const clientId = String(body.clientId ?? "").trim();

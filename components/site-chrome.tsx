@@ -31,10 +31,15 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="content-width footer-grid">
-        <Link href="/" className="brand-lockup"><Image src={business.logos.full} alt={business.name} width={703} height={736} /></Link>
+        <Link href="/" className="brand-lockup">
+          <Image src={business.logos.full} alt={business.name} width={703} height={736} />
+        </Link>
         <div><p>Based in {business.location}</p><a href={`mailto:${business.email}`}>{business.email}</a></div>
         <div><a href="#">Instagram</a><a href="#">Pinterest</a></div>
         <p className="copyright">© {new Date().getFullYear()} {business.name}</p>
+        <Link href="/admin/login" className="footer-staff-login">
+          Staff Login
+        </Link>
       </div>
     </footer>
   );

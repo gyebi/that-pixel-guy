@@ -13,7 +13,7 @@ export default async function ClientGalleryPage({ params }: Props) {
   if (!shoot || shoot.clientId !== client.id) return <section className="client-denied"><p className="client-kicker">Private gallery</p><h1>This gallery isn&apos;t yours.</h1><p>For your privacy, you can only view galleries assigned to your current demo session.</p></section>;
 
   const photos = await demoRepository.getPhotosForGallery(gallery.id);
-  return
+  return (
   <section className="client-gallery">
     <header><p className="client-kicker">Private gallery · {photos.length} photographs</p>
     <h1>{gallery.name}</h1><p>Downloads {gallery.downloadsEnabled ? "are enabled" : "are not available"} for this gallery.</p>
@@ -24,5 +24,6 @@ export default async function ClientGalleryPage({ params }: Props) {
       width={photo.width}
       height={photo.height}
       sizes="(max-width: 720px) 100vw, (max-width: 1050px) 50vw, 33vw" /></figure>)}</div>
-      </section>;
+      </section>
+      );
 }

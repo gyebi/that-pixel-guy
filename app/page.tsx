@@ -53,7 +53,17 @@ export default function Home() {
       </section>
 
       <section className="contact-section" id="contact"><div className="content-width contact-wrap"><p className="eyebrow">Let&apos;s make something beautiful</p><h2>Tell me what<br />you&apos;re dreaming of.</h2><a href={`mailto:${business.email}`} className="button-link">Start a conversation <Arrow /></a></div></section>
-      <footer className="site-footer"><div className="content-width footer-grid"><Image className="footer-full-logo" src={business.logos.full} alt={business.name} width={703} height={736} /><div><p>Based in {business.location}</p><a href={`mailto:${business.email}`}>{business.email}</a></div><div><a href="#">Instagram</a><a href="#">Pinterest</a></div><p className="copyright">© {new Date().getFullYear()} {business.name}</p></div></footer>
+      <footer className="site-footer">
+        <div className="content-width footer-grid">
+          <Image className="footer-full-logo" src={business.logos.full} alt={business.name} width={703} height={736} />
+          <div><p>Based in {business.location}</p><a href={`mailto:${business.email}`}>{business.email}</a></div>
+          <div><a href="#">Instagram</a>
+            <a href="#">Pinterest</a>
+
+            <Link href="/admin/login" className="footer-staff-login">Staff Login
+            </Link>
+
+          </div><p className="copyright">© {new Date().getFullYear()} {business.name}</p></div></footer>
     </main>
   );
 }

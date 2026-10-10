@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { error: "Unable to establish admin session." },
+      { error: "Unable to establish Admin session." },
       { status: 401 }
     );
   }

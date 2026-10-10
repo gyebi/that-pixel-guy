@@ -69,10 +69,19 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch {
+  } catch (error) {
+    console.error("[Admin Session] Authentication failed", {
+      code:
+        error && typeof error === "object" && "code" in error
+          ? error.code
+          : "unknown",
+      message:
+        error instanceof Error ? error.message : "Unknown server error",
+    });
+
     return NextResponse.json(
       { error: "Unable to establish admin session." },
-      { status: 401 },
+      { status: 401 }
     );
   }
 }

@@ -1,11 +1,17 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { DemoClientLoginForm } from "@/components/demo-client-login-form";
+import { isDemoAccessEnabled } from "@/lib/demo-access";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { demoRepository } from "@/lib/demo-repository";
 
 export const metadata = { title: "Client Login" };
 
 export default async function ClientLoginPage() {
+  if (!isDemoAccessEnabled()) {
+    notFound();
+  }
+
   const clients = await demoRepository.getClients();
   const clientOptions = await Promise.all(clients.map(async (client) => {
     const [shoot] = await demoRepository.getShootsForClient(client.id);

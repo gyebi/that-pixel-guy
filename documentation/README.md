@@ -1,26 +1,22 @@
 # That Pixel Guy — Project Documentation
 
-This folder holds the product brief and working project notes for the That Pixel Guy MVP.
+This directory contains implementation, operational, and product-reference notes for the That Pixel Guy photography website.
 
+- [Development migration safety](development-migrations.md) explains the deliberately development-only Prisma migration guard.
+- [Production release prerequisites](production-release.md) documents the required environment configuration, migration separation, backup, rollback, and smoke-test procedure.
 - `reference/` contains source material supplied for the project.
-- `dependencies/` records approved packages, external services, and the reason each is needed.
-- `tasks/` contains the implementation checklist and items that need the project owner's input.
+- `dependencies/` records approved packages and external services.
+- `tasks/` contains historical planning material and owner follow-ups; it is not the current implementation contract.
 
-The current business name is **That Pixel Guy**. It remains centralized in application configuration for future brand changes.
+## Current architecture
 
-## MVP boundary
-
-The first release is a polished client-demo vertical slice for one photographer serving multiple clients. It deliberately has **no production database, Prisma, SQL, migrations, payment gateway, production media storage, or external CMS**. These decisions remain deferred until a separate architecture session.
-
-## Approved gallery architecture
+The application uses Next.js 16, TypeScript, Prisma 7, Neon PostgreSQL, Firebase Authentication/Firebase Admin, and Cloudinary. The protected photographer dashboard manages persisted client, shoot, gallery, and photo metadata. `GalleryPhoto` provides gallery membership and per-gallery ordering. Public business/contact/social settings and homepage copy are revisioned singleton records.
 
 ```text
 Client -> Shoot -> Photo
                  -> Gallery -> GalleryPhoto -> Photo
 ```
 
-Photos belong to shoots. Galleries curate and reference shoot photos through `GalleryPhoto`, which carries gallery-specific ordering and avoids duplicating a photo when it is used by multiple galleries. Photo domain records store metadata and a current image reference, not image bytes.
+Private shoot and gallery media are authenticated Cloudinary assets. Public marketing pages must use approved public assets only; they must not fetch or display private client-gallery media. The simulated client demo is development-only and not production client authentication.
 
-The eventual production design will place actual image files in dedicated image/object storage. Database persistence and storage-provider selection are intentionally deferred; the current implementation is mock repository data backed by authorized local project assets.
-
-See [the supplied development brief](reference/Photography_Webpage_MVP_Codex_Dev_Doc.docx) and the [MVP task checklist](tasks/MVP_TASKS.md).
+See [the supplied development brief](reference/Photography_Webpage_MVP_Codex_Dev_Doc.docx) for original product context.

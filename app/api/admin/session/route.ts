@@ -1,87 +1,96 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { getFirebaseAdminAuth } from "@/lib/firebase/admin";
-import { ADMIN_SESSION_COOKIE } from "@/lib/auth/require-admin";
+import {
+  ADMIN_SESSION_COOKIE,
+  ADMIN_SESSION_ID_COOKIE,
+} from "@/lib/auth/require-admin";
+import {
+  ADMIN_ABSOLUTE_TIMEOUT_MS,
+  createAdminSessionService,
+} from "@/lib/auth/admin-session-service";
+import { hasSameOrigin } from "@/lib/auth/same-origin";
+import { adminSessionRepository } from "@/lib/repositories/admin-session-repository";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-const SESSION_DURATION = 5 * 24 * 60 * 60 * 1000;
+const MAX_ID_TOKEN_LENGTH = 16 * 1024;
+
+function noStoreJson(body: object, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store" },
+  });
+}
+
+function setSessionCookies(
+  response: NextResponse,
+  firebaseSessionCookie: string,
+  sessionId: string,
+) {
+  const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: ADMIN_ABSOLUTE_TIMEOUT_MS / 1000,
+  };
+
+  response.cookies.set(ADMIN_SESSION_COOKIE, firebaseSessionCookie, options);
+  response.cookies.set(ADMIN_SESSION_ID_COOKIE, sessionId, options);
+}
 
 export async function POST(request: NextRequest) {
+  if (!hasSameOrigin(request)) {
+    return noStoreJson({ error: "Invalid request origin." }, 403);
+  }
+
   try {
-    const origin = request.headers.get("origin");
+    const body: unknown = await request.json();
+    const idToken =
+      body && typeof body === "object" && "idToken" in body
+        ? (body as { idToken?: unknown }).idToken
+        : null;
 
-    const allowedOrigins = new Set([
-      "http://localhost:3000",
-      "https://that-pixel-guy--itconferencegh.us-east4.hosted.app",
-    ]);
-
-    if (!origin || !allowedOrigins.has(origin)) {
-      return NextResponse.json(
-        { error: "Invalid request origin." },
-        { status: 403 }
-      );
-    }
-
-    const { idToken } = await request.json();
-
-    if (typeof idToken !== "string" || !idToken) {
-      return NextResponse.json(
-        { error: "Missing Firebase ID token." },
-        { status: 400 },
-      );
+    if (
+      typeof idToken !== "string" ||
+      idToken.length === 0 ||
+      idToken.length > MAX_ID_TOKEN_LENGTH
+    ) {
+      return noStoreJson({ error: "Unable to establish Admin session." }, 400);
     }
 
     const auth = getFirebaseAdminAuth();
     const decoded = await auth.verifyIdToken(idToken, true);
-
     const approvedUid = process.env.FIREBASE_ADMIN_UID;
 
     if (!approvedUid || decoded.uid !== approvedUid) {
-      return NextResponse.json(
-        { error: "Not authorized as photographer." },
-        { status: 403 },
-      );
+      return noStoreJson({ error: "Not authorized as photographer." }, 403);
     }
 
-    // Require a recent Firebase sign-in.
     const signedInAt = decoded.auth_time * 1000;
-
-    if (Date.now() - signedInAt > 5 * 60 * 1000) {
-      return NextResponse.json(
-        { error: "Please sign in again." },
-        { status: 401 },
-      );
+    if (!Number.isFinite(signedInAt) || Date.now() - signedInAt > 5 * 60 * 1000) {
+      return noStoreJson({ error: "Please sign in again." }, 401);
     }
 
-    const sessionCookie = await auth.createSessionCookie(idToken, {
-      expiresIn: SESSION_DURATION,
+    const firebaseSessionCookie = await auth.createSessionCookie(idToken, {
+      expiresIn: ADMIN_ABSOLUTE_TIMEOUT_MS,
     });
-
-    const response = NextResponse.json({ success: true });
-
-    response.cookies.set(ADMIN_SESSION_COOKIE, sessionCookie, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: SESSION_DURATION / 1000,
-    });
-
-    return response;
-  } catch (error) {
-    console.error("[Admin Session] Authentication failed", {
-      code:
-        error && typeof error === "object" && "code" in error
-          ? error.code
-          : "unknown",
-      message:
-        error instanceof Error ? error.message : "Unknown server error",
-    });
-
-    return NextResponse.json(
-      { error: "Unable to establish Admin session." },
-      { status: 401 }
+    const created = await createAdminSessionService(adminSessionRepository).create(
+      decoded.uid,
     );
+    const response = noStoreJson({
+      success: true,
+      session: {
+        idleExpiresAt: created.session.idleExpiresAt.toISOString(),
+        absoluteExpiresAt: created.session.absoluteExpiresAt.toISOString(),
+      },
+    });
+
+    setSessionCookies(response, firebaseSessionCookie, created.sessionId);
+    return response;
+  } catch {
+    // Do not log ID tokens, session identifiers, or provider error details.
+    return noStoreJson({ error: "Unable to establish Admin session." }, 401);
   }
 }

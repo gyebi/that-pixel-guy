@@ -55,30 +55,44 @@ export function AdminGalleryForm({
     }
   }
 
-  return (
-    <form className="admin-panel" onSubmit={handleSubmit}>
-      <label>
-        Gallery name
-        <input
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="e.g. Abigail Graduation Gallery"
-          required
-        />
-      </label>
 
-      <label>
-        Expiration date
-        <input
-          type="date"
-          value={expiresOn}
-          onChange={(event) => setExpiresOn(event.target.value)}
-        />
-      </label>
+return (
+  <form
+    className="admin-panel admin-form"
+    onSubmit={handleSubmit}
+  >
+    <div className="admin-form__heading">
+      <h2>Gallery information</h2>
+      <p>Enter the details for this client gallery.</p>
+    </div>
 
-      {error ? <p role="alert">{error}</p> : null}
+    <div className="admin-form__fields">
+      <label htmlFor="gallery-name">Gallery name</label>
+      <input
+        id="gallery-name"
+        type="text"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder="e.g. Abigail Graduation Gallery"
+        required
+      />
 
+      <label htmlFor="gallery-expiration">Expiration date</label>
+      <input
+        id="gallery-expiration"
+        type="date"
+        value={expiresOn}
+        onChange={(event) => setExpiresOn(event.target.value)}
+      />
+    </div>
+
+    {error ? (
+      <p className="admin-form__error" role="alert">
+        {error}
+      </p>
+    ) : null}
+
+    <div className="admin-form__actions">
       <button
         className="admin-button"
         type="submit"
@@ -86,7 +100,8 @@ export function AdminGalleryForm({
       >
         {submitting ? "Creating…" : "Create gallery"}
       </button>
-    </form>
-  );
-}
+    </div>
+  </form>
+);
 
+}

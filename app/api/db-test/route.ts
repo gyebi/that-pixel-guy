@@ -1,13 +1,31 @@
 
 import { NextResponse } from "next/server";
-import { clientRepository } from "@/lib/repositories/client-repository";
+import { getAdminSession } from "@/lib/auth/require-admin";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const clients = await clientRepository.getAll();
+  try {
+    const admin = await getAdminSession();
 
-  return NextResponse.json({
-    database: "connected",
-    clientCount: clients.length,
-    clients,
-  });
+    if (!admin) {
+      return NextResponse.json(
+        { error: "Unauthorized. Photographer login required." },
+        { status: 401, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
+    // A count verifies the database connection without loading client records.
+    await prisma.client.count();
+
+    return NextResponse.json(
+      { database: "connected" },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch {
+    // Deliberately avoid returning database or authentication error details.
+    return NextResponse.json(
+      { database: "unavailable" },
+      { status: 503, headers: { "Cache-Control": "no-store" } },
+    );
+  }
 }

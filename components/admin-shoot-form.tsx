@@ -51,39 +51,54 @@ export function AdminShootForm({ clientId }: Props) {
     }
   }
 
+
   return (
-    <form className="admin-panel" onSubmit={handleSubmit}>
-      <label>
-        Shoot name
+    <form
+      className="admin-panel admin-form"
+      onSubmit={handleSubmit}
+    >
+      <div className="admin-form__heading">
+        <h2>Shoot information</h2>
+        <p>Enter the details for this photography session.</p>
+      </div>
+
+      <div className="admin-form__fields">
+        <label htmlFor="shoot-name">Shoot name</label>
         <input
+          id="shoot-name"
           type="text"
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="e.g. Abigail's Graduation"
           required
         />
-      </label>
 
-      <label>
-        Shoot date
+        <label htmlFor="shoot-date">Shoot date</label>
         <input
+          id="shoot-date"
           type="date"
           value={date}
           onChange={(event) => setDate(event.target.value)}
           required
         />
-      </label>
+      </div>
 
-      {error ? <p role="alert">{error}</p> : null}
+      {error ? (
+        <p className="admin-form__error" role="alert">
+          {error}
+        </p>
+      ) : null}
 
-      <button
-        className="admin-button"
-        type="submit"
-        disabled={submitting}
-      >
-        {submitting ? "Creating…" : "Create shoot"}
-      </button>
+      <div className="admin-form__actions">
+        <button
+          className="admin-button"
+          type="submit"
+          disabled={submitting}
+        >
+          {submitting ? "Creating…" : "Create shoot"}
+        </button>
+      </div>
     </form>
   );
-}
 
+}

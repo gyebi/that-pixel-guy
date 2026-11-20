@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { notifyAdminSession } from "./admin-session-monitor";
 
 export function AdminLogoutButton() {
   const [loading, setLoading] = useState(false);
@@ -19,6 +20,7 @@ export function AdminLogoutButton() {
         throw new Error("Unable to sign out.");
       }
 
+      notifyAdminSession({ type: "logout", at: Date.now() });
       window.location.replace("/admin/login");
     } catch {
       setError("Logout failed. Please try again.");

@@ -1,81 +1,55 @@
-# That Pixel Guy — Photography MVP
+# That Pixel Guy — Photography Website
 
-A premium photography client-experience MVP for **That Pixel Guy**. The app includes a public portfolio, integrated photographer Admin area, and a simulated client-gallery access layer.
+That Pixel Guy is a Next.js 16 application for a photographer's public site and protected studio administration. It uses Prisma 7 with Neon PostgreSQL, Firebase Authentication/Firebase Admin for photographer identity, persisted admin sessions, and authenticated Cloudinary media delivery.
 
-## Run locally
+## Current capabilities
 
-Requires Node.js 22+ and npm.
+- Public marketing pages use persisted site settings and homepage copy, with safe built-in fallbacks before their additive database migrations are available.
+- `/admin` is a Firebase-protected photographer workspace with a server-enforced persisted session: 15-minute idle timeout and 8-hour absolute lifetime.
+- The administrator can manage real clients, shoots, galleries, authenticated photo uploads, gallery membership, and gallery display order.
+- `/admin/site` manages public business/contact/social settings and homepage text with revision-based conflict detection.
+- Admin thumbnails are delivered by a protected proxy; Cloudinary originals and reusable delivery URLs are not exposed to the browser.
+
+The simulated client-gallery demo remains a development-only visual aid. It is disabled in production, cannot authorize persisted client data, and is not a client authentication system.
+
+## Local development
+
+Requires Node.js 22 and npm.
 
 ```bash
-npm install
+npm ci
 npm run dev -- --webpack
 ```
 
-Open the local URL printed by Next.js. Use the webpack flag in this environment because Turbopack cannot start its CSS worker under the managed sandbox.
+Create local runtime configuration from the documented variable names in [the production/release guide](documentation/production-release.md); never commit secret values. Use the webpack flag in this environment because Turbopack cannot start its CSS worker under the managed sandbox.
 
 ## Quality checks
 
 ```bash
+npm test
 npm run lint
+npx tsc --noEmit
 npm run build -- --webpack
+git diff --check
 ```
 
-## Demo routes
-
-- `/` — public website
-- `/portfolio`, `/services`, `/about`, `/journal`, `/contact` — public content routes
-- `/admin` — integrated photographer dashboard
-- `/admin/site` — session-only homepage editor demonstration
-- `/client-login` — choose a demo client
-- `/client` — restricted client area
-
-The client demo uses a short-lived HttpOnly cookie. It is only an MVP authorization simulation; it is not production authentication.
-
-## Assets
-
-Brand files are stored in [`public/brand`](public/brand). Curated, approved That Pixel Guy photography is stored in [`public/images`](public/images). Unsplash placeholders remain only for content types not represented by the approved export; do not add unapproved stock images as replacements.
-
-When the approved source export arrives, organize images as follows:
-
-```text
-public/images/
-  portfolio/
-    graduations/
-    portraits/
-    events/
-  journal/
-  demo-galleries/
-    client-a/
-    client-b/
-  frame-studio/rooms/
-```
-
-See [`documentation/tasks/MVP_TASKS.md`](documentation/tasks/MVP_TASKS.md) for curation and owner tasks.
-
-## Firebase and GitHub delivery
-
-The intended deployment path is **Firebase App Hosting** connected to this GitHub repository. Do not commit Firebase credentials, service-account keys, or `.env` files. The Firebase project, billing/region choice, and App Hosting connection remain owner tasks.
-
-## MVP boundary
-
-This MVP intentionally uses TypeScript domain types, repository interfaces, and mock/session state only.
-
-Do **not** introduce a production database, Prisma, SQL, migrations, Firestore, Firebase Authentication, payment gateway, production media storage, or external CMS without a separate approved architecture decision.
-
-## Approved gallery architecture
+## Data model
 
 ```text
 Client -> Shoot -> Photo
                  -> Gallery -> GalleryPhoto -> Photo
 ```
 
-Clients have shoots. Photos belong to a shoot and hold photograph metadata plus a current image reference; they are not image-byte records. Galleries also belong to a shoot and curate those photos through `GalleryPhoto`, which provides gallery-specific ordering and permits a photo to appear in more than one gallery without duplication.
+Photos belong to shoots and retain upload metadata. `GalleryPhoto` assigns eligible shoot photos to a gallery and maintains a gallery-specific display position. `SiteSettings` and `HomepageContent` are revisioned singleton records for public CMS content; neither relates to client galleries.
 
-The demo repository uses authorized local files in `public/images` as temporary photo references. In production, actual image files will live in dedicated image/object storage. Database persistence and storage-provider selection remain deferred.
+## Migration safety
 
-## Repository workflow
+Application queries use the pooled `DATABASE_URL`. The repository's Prisma migration configuration refuses to fall back to it: development migration commands require a separate direct `MIGRATION_DATABASE_URL` and an exact independently configured `MIGRATION_DEVELOPMENT_HOST`. The current workflow explicitly rejects the known production endpoint. See [development migration safety](documentation/development-migrations.md) and [production release prerequisites](documentation/production-release.md).
 
-1. Keep changes focused and run the quality checks above.
-2. Commit clear, small changes to `main` or a feature branch.
-3. Push to GitHub.
-4. After Firebase App Hosting is connected, GitHub pushes to the chosen live branch can trigger deployment.
+## Assets and media
+
+Brand files live in [`public/brand`](public/brand), while approved public site imagery lives in [`public/images`](public/images). Private shoot and gallery images remain in authenticated Cloudinary delivery paths and must never be substituted into public marketing pages.
+
+## Release process
+
+GitHub Actions checks pull requests and `release/**` branches without database, Firebase, or Cloudinary credentials. It does not migrate databases or deploy. Production deployment and production migrations require the separately approved procedure in [documentation/production-release.md](documentation/production-release.md).

@@ -2,6 +2,7 @@
 import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin-shell";
 import { AdminGalleryForm } from "@/components/admin-gallery-form";
+import { AdminPhotoUploadForm } from "@/components/admin-photo-upload-form";
 import { shootRepository } from "@/lib/repositories/shoot-repository";
 
 type Props = {
@@ -28,8 +29,9 @@ export default async function NewGalleryPage({ params }: Props) {
         shootId={shoot.id}
         clientId={shoot.clientId}
       />
+
+      <AdminPhotoUploadForm shootId={shoot.id} />
     </>
   );
 }
-
 

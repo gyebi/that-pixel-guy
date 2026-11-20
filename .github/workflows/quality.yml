@@ -25,6 +25,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Generate Prisma Client
+        run: npx prisma generate
       - run: npm test
       - run: npm run lint
       - name: Generate Next.js route types

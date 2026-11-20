@@ -1,7 +1,9 @@
-import "dotenv/config";
+import { config } from "dotenv";
 import { readFile } from "node:fs/promises";
 import { cloudinaryService } from "../lib/media/cloudinary-service";
 import { getCloudinary } from "../lib/media/cloudinary-config";
+
+config({ path: ".env.local" });
 
 async function main() {
   const filename = "public/images/celebration-hero.jpg";
@@ -57,4 +59,3 @@ main().catch((error) => {
   console.error("MediaService test failed:", error.message);
   process.exitCode = 1;
 });
-

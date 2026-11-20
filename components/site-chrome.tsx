@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+import { isDemoAccessEnabled } from "@/lib/demo-access";
 import { business } from "@/lib/site-content";
+import { getPublicSiteSettings } from "@/lib/repositories/site-settings-repository";
 
 const links = [
   ["Work", "/portfolio"],
@@ -10,33 +12,48 @@ const links = [
   ["Contact", "/contact"],
 ] as const;
 
-export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
+export async function SiteHeader({ inverted = false }: { inverted?: boolean }) {
+  const settings = await getPublicSiteSettings();
+
   return (
     <header className={`inner-header${inverted ? " inner-header--inverted" : ""}`}>
       <div className="content-width inner-header__content">
-        <Link href="/" className="brand-lockup" aria-label={`${business.name} home`}>
+        <Link href="/" className="brand-lockup" aria-label={`${settings.businessName} home`}>
           <Image src={business.logos.mark} alt="" width={696} height={736} />
-          <span>{business.name}</span>
+          <span>{settings.businessName}</span>
         </Link>
         <nav aria-label="Main navigation" className="inner-nav">
           {links.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}
         </nav>
-        <Link href="/client-login" className="nav-login">Client login <Arrow /></Link>
+        {isDemoAccessEnabled() ? <Link href="/client-login" className="nav-login">Client login <Arrow /></Link> : null}
       </div>
     </header>
   );
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const settings = await getPublicSiteSettings();
+
   return (
     <footer className="site-footer">
       <div className="content-width footer-grid">
         <Link href="/" className="brand-lockup">
-          <Image src={business.logos.full} alt={business.name} width={703} height={736} />
+          <Image src={business.logos.full} alt={settings.businessName} width={703} height={736} />
         </Link>
-        <div><p>Based in {business.location}</p><a href={`mailto:${business.email}`}>{business.email}</a></div>
-        <div><a href="#">Instagram</a><a href="#">Pinterest</a></div>
-        <p className="copyright">© {new Date().getFullYear()} {business.name}</p>
+        <div>
+          <p>{settings.location ? `Based in ${settings.location}` : ""}</p>
+          <a href={`mailto:${settings.publicEmail}`}>{settings.publicEmail}</a>
+          {settings.phoneNumber ? <a href={`tel:${settings.phoneNumber.replace(/[^+\d]/g, "")}`}>{settings.phoneNumber}</a> : null}
+          {settings.whatsAppNumber ? <a href={`https://wa.me/${settings.whatsAppNumber.replace(/\D/g, "")}`}>WhatsApp</a> : null}
+        </div>
+        <div>
+          {settings.instagramUrl ? <a href={settings.instagramUrl}>Instagram</a> : null}
+          {settings.facebookUrl ? <a href={settings.facebookUrl}>Facebook</a> : null}
+          {settings.pinterestUrl ? <a href={settings.pinterestUrl}>Pinterest</a> : null}
+          {settings.tikTokUrl ? <a href={settings.tikTokUrl}>TikTok</a> : null}
+          {settings.youTubeUrl ? <a href={settings.youTubeUrl}>YouTube</a> : null}
+        </div>
+        <p className="copyright">© {new Date().getFullYear()} {settings.businessName}</p>
         <Link href="/admin/login" className="footer-staff-login">
           Staff Login
         </Link>

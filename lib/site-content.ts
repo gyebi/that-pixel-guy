@@ -12,6 +12,39 @@ export const business = {
   },
 };
 
+export const siteSettingsFallback = {
+  businessName: business.name,
+  publicEmail: business.email,
+  phoneNumber: business.phone,
+  whatsAppNumber: business.phone,
+  location: business.location,
+  instagramUrl: null,
+  facebookUrl: null,
+  pinterestUrl: null,
+  tikTokUrl: null,
+  youTubeUrl: null,
+};
+
+export const homepageContentFallback = {
+  heroEyebrow: "Accra · Ghana · Available worldwide",
+  heroHeading: "Photographs with\na pulse.",
+  heroIntro: "Honest, artful photography for the occasions and people you never want to forget.",
+  heroCtaLabel: "Begin your story",
+  introEyebrow: "The Pixel Guy approach",
+  introHeading: "Where feeling\nbecomes form.",
+  introBody: "The best photographs don't ask you to perform. They make room for you to be there—fully, beautifully, and without hurry.",
+  introCtaLabel: "Meet the Pixel Guy",
+  workEyebrow: "Selected work",
+  workHeading: "Stories worth returning to.",
+  workCtaLabel: "View all work",
+  servicesEyebrow: "For the remarkable days",
+  servicesHeading: "Be in the moment.\nI'll hold onto it.",
+  servicesBody: "From joyful gatherings to quiet milestones, every session is considered with care and made to feel unmistakably yours.",
+  contactEyebrow: "Let's make something beautiful",
+  contactHeading: "Tell me what\nyou're dreaming of.",
+  contactCtaLabel: "Start a conversation",
+};
+
 export const portfolioCategories = [
   { name: "Weddings", count: "38 stories", image: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85", className: "portfolio-card--tall" },
   { name: "Portraits", count: "24 stories", image: "/images/portrait-celebration.jpg", className: "portfolio-card--short" },

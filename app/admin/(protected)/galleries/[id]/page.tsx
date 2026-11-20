@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin-shell";
+import { AdminGalleryPhotoManager } from "@/components/admin-gallery-photo-manager";
+import { AdminPhotoUploadForm } from "@/components/admin-photo-upload-form";
 import { galleryRepository } from "@/lib/repositories/gallery-repository";
+import { photoRepository } from "@/lib/repositories/photo-repository";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -16,7 +19,10 @@ export default async function AdminGalleryPage({ params }: Props) {
     notFound();
   }
 
-  const photos = gallery.photos;
+  const [photos, shootPhotos] = await Promise.all([
+    Promise.resolve(gallery.photos),
+    photoRepository.getForShoot(gallery.shootId),
+  ]);
 
   return (
     <>
@@ -24,9 +30,9 @@ export default async function AdminGalleryPage({ params }: Props) {
         eyebrow="Private gallery"
         title={gallery.name}
         action={
-          <button className="admin-button">
+          <Link className="admin-button" href={`/admin/galleries/${gallery.id}/edit`}>
             Edit gallery
-          </button>
+          </Link>
         }
       />
 
@@ -81,6 +87,37 @@ export default async function AdminGalleryPage({ params }: Props) {
             Back to client
           </Link>
         </div>
+      </section>
+
+      <AdminGalleryPhotoManager
+        galleryId={gallery.id}
+        photos={shootPhotos.map((photo) => ({
+          id: photo.id,
+          originalFilename: photo.originalFilename,
+          width: photo.width,
+          height: photo.height,
+          status: photo.status,
+        }))}
+        memberships={photos.map((galleryPhoto) => ({
+          photoId: galleryPhoto.photoId,
+          position: galleryPhoto.position,
+        }))}
+      />
+
+      <section
+        className="admin-upload-section"
+        aria-labelledby="upload-photographs-heading"
+      >
+        <div className="admin-upload-section__heading">
+          <p className="admin-eyebrow">Upload photographs</p>
+          <h2 id="upload-photographs-heading">Add to this shoot</h2>
+          <p>
+            Uploaded photographs belong to the shoot and are not added to this
+            gallery automatically.
+          </p>
+        </div>
+
+        <AdminPhotoUploadForm shootId={gallery.shootId} />
       </section>
     </>
   );

@@ -26,6 +26,11 @@ export const clientRepository = {
               orderBy: {
                 createdAt: "desc",
               },
+              include: {
+                _count: {
+                  select: { photos: true },
+                },
+              },
             },
           },
         },
@@ -45,6 +50,11 @@ export const clientRepository = {
             galleries: {
               orderBy: {
                 createdAt: "desc",
+              },
+              include: {
+                _count: {
+                  select: { photos: true },
+                },
               },
             },
           },

@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { business } from "@/lib/site-content";
 import { AdminLogoutButton } from "./admin-logout-button";
+import { AdminNavigation } from "./admin-navigation";
 
-const navigation = [["Overview", "/admin"], ["Website", "/admin/site"], ["Portfolio", "/admin/portfolio"], ["Journal", "/admin/journal"], ["Clients", "/admin/clients"], ["Galleries", "/admin/galleries"], ["Products", "/admin/products"], ["Orders", "/admin/orders"], ["Settings", "/admin/settings"]] as const;
 type AdminPageHeaderProps = {
   eyebrow: string;
   title: string;
@@ -40,8 +40,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </Link>
       <p className="admin-user"><b>TPG</b><span>{business.name}<br />
         <small>Photographer</small></span></p>
-      <nav aria-label="Admin navigation">{navigation.map(([label, href]) =>
-        <Link href={href} key={href}>{label}</Link>)}</nav>
+      <AdminNavigation />
       <div className="admin-sidebar-footer">
         <Link className="admin-view-site" href="/">
           ↗ View website

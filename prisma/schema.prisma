@@ -86,3 +86,16 @@ model GalleryPhoto {
   @@unique([galleryId, position])
   @@index([photoId])
 }
+
+model AdminSession {
+  id                String    @id @default(cuid())
+  sessionIdHash     String    @unique
+  uid               String
+  createdAt         DateTime  @default(now())
+  lastActivityAt    DateTime
+  absoluteExpiresAt DateTime
+  revokedAt         DateTime?
+
+  @@index([uid, revokedAt])
+  @@index([absoluteExpiresAt])
+}

@@ -2,6 +2,21 @@
 // npm install --save-dev prisma dotenv
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import { assertDevelopmentMigrationTarget } from "./lib/migrations/migration-target";
+
+const isMigrationCommand = process.argv.slice(2).includes("migrate");
+
+function migrationDatabaseUrl() {
+  const url = process.env["MIGRATION_DATABASE_URL"];
+
+  if (!url) {
+    throw new Error("MIGRATION_DATABASE_URL is required for Prisma migration commands.");
+  }
+
+  return url;
+}
+
+if (isMigrationCommand) assertDevelopmentMigrationTarget();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -9,6 +24,8 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // The app retains DATABASE_URL. Prisma migrate uses an explicitly separate
+    // direct development connection and is stopped by the preflight above.
+    url: isMigrationCommand ? migrationDatabaseUrl() : process.env["DATABASE_URL"],
   },
 });

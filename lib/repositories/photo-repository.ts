@@ -12,6 +12,15 @@ export type CreatePhotoInput = {
 };
 
 export const photoRepository = {
+  async getThumbnailById(id: string) {
+    return prisma.photo.findUnique({
+      where: { id },
+      select: {
+        mediaKey: true,
+      },
+    });
+  },
+
   async getById(id: string) {
     return prisma.photo.findUnique({
       where: { id },
@@ -43,4 +52,3 @@ export const photoRepository = {
     });
   },
 };
-

@@ -46,30 +46,48 @@ export function AdminClientForm() {
     }
   }
 
-  return (
-    <form className="admin-panel" onSubmit={handleSubmit}>
-      <label>
-        Client name
-        <input
-          type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          required
-        />
-      </label>
 
-      <label>
-        Email address
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-        />
-      </label>
+return (
+  <form
+    className="admin-panel admin-form"
+    onSubmit={handleSubmit}
+  >
+    <div className="admin-form__heading">
+      <h2>Client information</h2>
+      <p>Enter the client&apos;s details to create their profile.</p>
+    </div>
 
-      {error ? <p role="alert">{error}</p> : null}
+    <div className="admin-form__fields">
+      <label htmlFor="client-name">Client name</label>
+      <input
+        id="client-name"
+        type="text"
+        autoComplete="name"
+        maxLength={120}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        required
+      />
 
+      <label htmlFor="client-email">Email address</label>
+      <input
+        id="client-email"
+        type="email"
+        autoComplete="email"
+        maxLength={254}
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        required
+      />
+    </div>
+
+    {error ? (
+      <p className="admin-form__error" role="alert">
+        {error}
+      </p>
+    ) : null}
+
+    <div className="admin-form__actions">
       <button
         className="admin-button"
         type="submit"
@@ -77,8 +95,8 @@ export function AdminClientForm() {
       >
         {submitting ? "Creating…" : "Create client"}
       </button>
-    </form>
-  );
+    </div>
+  </form>
+);
+
 }
-
-

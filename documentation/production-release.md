@@ -11,8 +11,9 @@ Configure these server-only values in the Firebase App Hosting production enviro
 - `FIREBASE_ADMIN_UID`: the single approved photographer Firebase UID.
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: service-account JSON only when the App Hosting runtime does not provide a suitable application-default service identity. Prefer the platform service identity where possible.
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`: server-only Cloudinary authenticated-delivery and upload credentials.
+- `ADMIN_TRUSTED_ORIGINS`: required in production; a comma-separated allowlist of exact canonical HTTPS browser origins for cookie-authenticated admin mutations. Use the public Firebase App Hosting `hosted.app` origin(s), not the internal Cloud Run `run.app` origin. Entries must have no whitespace, trailing slash, path, query, fragment, credentials, wildcard, duplicate, or non-HTTPS value. A malformed or duplicate configuration fails closed for every admin mutation.
 
-For a time-bounded origin investigation only, `ADMIN_ORIGIN_DIAGNOSTICS=1` enables sanitized rejected-origin diagnostics. The log contains a fixed stage and booleans only; it never contains origins, URLs, headers, credentials, cookies, or request bodies. Remove this setting after the incident is resolved.
+The temporary `ADMIN_ORIGIN_DIAGNOSTICS` setting and associated logging were removed after the App Hosting origin mismatch was verified. Do not reintroduce request-origin logging that could expose headers, URLs, tokens, or cookies.
 
 Set these client Firebase configuration values at build time, as `NEXT_PUBLIC_` variables are inlined by Next.js:
 
@@ -28,6 +29,14 @@ Set these client Firebase configuration values at build time, as `NEXT_PUBLIC_` 
 Before enabling a production trigger, identify and review the Firebase project, App Hosting backend, region, service identity, and the exact GitHub deployment branch in Firebase. No App Hosting configuration is committed in this repository, so the branch trigger cannot be inferred from source control alone. Require a protected production branch, required GitHub quality checks, and review approval before enabling automatic deployment.
 
 The repository workflow at `.github/workflows/quality.yml` runs on pull requests and `release/**` pushes. It intentionally has read-only `contents` permission and passes no database, Firebase, or Cloudinary credentials. It does not deploy or migrate.
+
+### Public-origin policy and domain changes
+
+App Hosting proxies public browser requests to Cloud Run. Cloud Run can record the internal `run.app` hostname even when the browser sent the request to the App Hosting `hosted.app` hostname. Admin origin validation therefore uses `ADMIN_TRUSTED_ORIGINS` and deliberately does not use request URL, `Host`, `X-Forwarded-Host`, or `X-Forwarded-Proto` to authorize a request.
+
+Before adding a custom domain, verify its HTTPS redirect and the exact browser origin. Add the existing App Hosting origin and the new custom-domain origin together, deploy the configuration, and test login plus every admin mutation from both origins. After DNS and user migration are complete, remove the retired origin in a separate configuration change. Do not use wildcards or a broad parent domain.
+
+Do not treat the allowlist as complete CSRF protection: it complements `SameSite=Lax`, `Secure`, `HttpOnly` cookies, Firebase token verification, the approved Firebase UID check, and the revocable server-side session. Browsers can access a direct Cloud Run URL, but host-only cookies issued on the public App Hosting host are not sent to a different `run.app` host; direct Cloud Run requests also cannot pass this policy unless that origin is explicitly allowlisted. Keep Cloud Run ingress restricted to App Hosting where the platform supports it, avoid adding a `run.app` origin to the allowlist, and continue to require authentication and authorization for every mutation. Origin checks do not protect against XSS, compromised trusted origins, malicious browser extensions, same-origin request forgery, or non-browser clients that can supply headers; those risks require their own controls.
 
 ## Database migration procedure
 

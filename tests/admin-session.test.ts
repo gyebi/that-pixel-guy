@@ -156,7 +156,7 @@ test("storage failures cannot produce an authenticated session", async () => {
   await assert.rejects(() => service.renew(created.sessionId, "approved-admin", startedAt));
 });
 
-test("session-changing requests require an exact same origin", () => {
+test("development session-changing requests require an exact same origin", () => {
   const sameOrigin = new Request("https://studio.example/api/admin/session/activity", {
     method: "POST",
     headers: { Origin: "https://studio.example" },
@@ -174,66 +174,104 @@ test("session-changing requests require an exact same origin", () => {
   assert.equal(hasSameOrigin(missingOrigin), false);
 });
 
-test("forwarded headers cannot bypass the original same-origin validation", () => {
-  const forged = new Request("http://internal.service/api/admin/session", {
-    method: "POST",
-    headers: {
-      Origin: "https://public.example",
-      "X-Forwarded-Host": "public.example",
-      "X-Forwarded-Proto": "https",
-    },
-  });
-
-  assert.equal(hasSameOrigin(forged), false);
-});
-
-test("optional rejected-origin diagnostics contain only fixed safe metadata", () => {
+function withEnvironment(name: string, value: string | undefined, run: () => void) {
   const environment = process.env as Record<string, string | undefined>;
-  const originalDiagnostics = environment.ADMIN_ORIGIN_DIAGNOSTICS;
-  const originalWarn = console.warn;
-  let logged: unknown[] | null = null;
+  const previous = environment[name];
 
-  environment.ADMIN_ORIGIN_DIAGNOSTICS = "1";
-  console.warn = (...args: unknown[]) => {
-    logged = args;
-  };
+  if (value === undefined) {
+    delete environment[name];
+  } else {
+    environment[name] = value;
+  }
 
   try {
-    const request = new Request("https://internal.example/api/admin/session", {
+    run();
+  } finally {
+    if (previous === undefined) {
+      delete environment[name];
+    } else {
+      environment[name] = previous;
+    }
+  }
+}
+
+function withProductionOrigins(origins: string | undefined, run: () => void) {
+  withEnvironment("NODE_ENV", "production", () => {
+    withEnvironment("ADMIN_TRUSTED_ORIGINS", origins, run);
+  });
+}
+
+test("production accepts an exact trusted HTTPS browser origin behind App Hosting", () => {
+  withProductionOrigins("https://pixel-guy.web.app", () => {
+    const request = new Request("https://internal-service.run.app/api/admin/session", {
+      method: "POST",
+      headers: { Origin: "https://pixel-guy.web.app" },
+    });
+
+    assert.equal(hasSameOrigin(request), true);
+  });
+});
+
+test("production rejects untrusted, missing, malformed, HTTP, and wrong-port origins", () => {
+  withProductionOrigins("https://pixel-guy.web.app", () => {
+    const request = (origin?: string) =>
+      new Request("https://internal-service.run.app/api/admin/session", {
+        method: "POST",
+        headers: origin ? { Origin: origin } : undefined,
+      });
+
+    assert.equal(hasSameOrigin(request("https://attacker.example")), false);
+    assert.equal(hasSameOrigin(request()), false);
+    assert.equal(hasSameOrigin(request("https://pixel-guy.web.app,https://attacker.example")), false);
+    assert.equal(hasSameOrigin(request("http://pixel-guy.web.app")), false);
+    assert.equal(hasSameOrigin(request("https://pixel-guy.web.app:8443")), false);
+  });
+});
+
+test("production fails closed for malformed, wildcard, or duplicate trusted-origin configuration", () => {
+  const request = new Request("https://internal-service.run.app/api/admin/session", {
+    method: "POST",
+    headers: { Origin: "https://pixel-guy.web.app" },
+  });
+
+  for (const origins of [
+    undefined,
+    "https://pixel-guy.web.app/",
+    "http://pixel-guy.web.app",
+    "https://*.web.app",
+    "https://pixel-guy.web.app,https://pixel-guy.web.app",
+  ]) {
+    withProductionOrigins(origins, () => {
+      assert.equal(hasSameOrigin(request), false, origins);
+    });
+  }
+});
+
+test("production permits each of multiple exact configured origins", () => {
+  withProductionOrigins("https://pixel-guy.web.app,https://photos.example.com:8443", () => {
+    for (const origin of ["https://pixel-guy.web.app", "https://photos.example.com:8443"]) {
+      const request = new Request("https://internal-service.run.app/api/admin/session", {
+        method: "POST",
+        headers: { Origin: origin },
+      });
+
+      assert.equal(hasSameOrigin(request), true);
+    }
+  });
+});
+
+test("forwarded and Host headers cannot authorize a production request", () => {
+  withProductionOrigins("https://pixel-guy.web.app", () => {
+    const forged = new Request("http://internal.service/api/admin/session", {
       method: "POST",
       headers: {
-        Origin: "https://public.example",
-        "X-Forwarded-Host": "public.example",
+        Origin: "https://attacker.example",
+        Host: "pixel-guy.web.app",
+        "X-Forwarded-Host": "pixel-guy.web.app",
         "X-Forwarded-Proto": "https",
       },
     });
 
-    assert.equal(hasSameOrigin(request), false);
-    assert.equal(logged?.[0], "[Admin Origin]");
-    assert.deepEqual(logged?.[1], {
-      stage: "admin_origin_rejected",
-      requestUrlOriginValid: true,
-      originMatchesRequestUrl: false,
-      forwardedHostPresent: true,
-      forwardedProtoPresent: true,
-      forwardedOriginValid: true,
-      forwardedOriginMatchesOrigin: true,
-    });
-    assert.deepEqual(Object.keys(logged?.[1] as object).sort(), [
-      "forwardedHostPresent",
-      "forwardedOriginMatchesOrigin",
-      "forwardedOriginValid",
-      "forwardedProtoPresent",
-      "originMatchesRequestUrl",
-      "requestUrlOriginValid",
-      "stage",
-    ]);
-  } finally {
-    console.warn = originalWarn;
-    if (originalDiagnostics === undefined) {
-      delete environment.ADMIN_ORIGIN_DIAGNOSTICS;
-    } else {
-      environment.ADMIN_ORIGIN_DIAGNOSTICS = originalDiagnostics;
-    }
-  }
+    assert.equal(hasSameOrigin(forged), false);
+  });
 });

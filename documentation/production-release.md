@@ -12,6 +12,8 @@ Configure these server-only values in the Firebase App Hosting production enviro
 - `FIREBASE_SERVICE_ACCOUNT_JSON`: service-account JSON only when the App Hosting runtime does not provide a suitable application-default service identity. Prefer the platform service identity where possible.
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`: server-only Cloudinary authenticated-delivery and upload credentials.
 
+For a time-bounded origin investigation only, `ADMIN_ORIGIN_DIAGNOSTICS=1` enables sanitized rejected-origin diagnostics. The log contains a fixed stage and booleans only; it never contains origins, URLs, headers, credentials, cookies, or request bodies. Remove this setting after the incident is resolved.
+
 Set these client Firebase configuration values at build time, as `NEXT_PUBLIC_` variables are inlined by Next.js:
 
 - `NEXT_PUBLIC_FIREBASE_API_KEY`

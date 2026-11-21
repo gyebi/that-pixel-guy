@@ -173,3 +173,67 @@ test("session-changing requests require an exact same origin", () => {
   assert.equal(hasSameOrigin(crossOrigin), false);
   assert.equal(hasSameOrigin(missingOrigin), false);
 });
+
+test("forwarded headers cannot bypass the original same-origin validation", () => {
+  const forged = new Request("http://internal.service/api/admin/session", {
+    method: "POST",
+    headers: {
+      Origin: "https://public.example",
+      "X-Forwarded-Host": "public.example",
+      "X-Forwarded-Proto": "https",
+    },
+  });
+
+  assert.equal(hasSameOrigin(forged), false);
+});
+
+test("optional rejected-origin diagnostics contain only fixed safe metadata", () => {
+  const environment = process.env as Record<string, string | undefined>;
+  const originalDiagnostics = environment.ADMIN_ORIGIN_DIAGNOSTICS;
+  const originalWarn = console.warn;
+  let logged: unknown[] | null = null;
+
+  environment.ADMIN_ORIGIN_DIAGNOSTICS = "1";
+  console.warn = (...args: unknown[]) => {
+    logged = args;
+  };
+
+  try {
+    const request = new Request("https://internal.example/api/admin/session", {
+      method: "POST",
+      headers: {
+        Origin: "https://public.example",
+        "X-Forwarded-Host": "public.example",
+        "X-Forwarded-Proto": "https",
+      },
+    });
+
+    assert.equal(hasSameOrigin(request), false);
+    assert.equal(logged?.[0], "[Admin Origin]");
+    assert.deepEqual(logged?.[1], {
+      stage: "admin_origin_rejected",
+      requestUrlOriginValid: true,
+      originMatchesRequestUrl: false,
+      forwardedHostPresent: true,
+      forwardedProtoPresent: true,
+      forwardedOriginValid: true,
+      forwardedOriginMatchesOrigin: true,
+    });
+    assert.deepEqual(Object.keys(logged?.[1] as object).sort(), [
+      "forwardedHostPresent",
+      "forwardedOriginMatchesOrigin",
+      "forwardedOriginValid",
+      "forwardedProtoPresent",
+      "originMatchesRequestUrl",
+      "requestUrlOriginValid",
+      "stage",
+    ]);
+  } finally {
+    console.warn = originalWarn;
+    if (originalDiagnostics === undefined) {
+      delete environment.ADMIN_ORIGIN_DIAGNOSTICS;
+    } else {
+      environment.ADMIN_ORIGIN_DIAGNOSTICS = originalDiagnostics;
+    }
+  }
+});

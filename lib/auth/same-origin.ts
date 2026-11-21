@@ -1,66 +1,75 @@
-type RejectedOriginDiagnostic = {
-  stage: "admin_origin_rejected";
-  requestUrlOriginValid: boolean;
-  originMatchesRequestUrl: boolean;
-  forwardedHostPresent: boolean;
-  forwardedProtoPresent: boolean;
-  forwardedOriginValid: boolean;
-  forwardedOriginMatchesOrigin: boolean;
-};
-
-function getForwardedOrigin(request: Request) {
-  const host = request.headers.get("x-forwarded-host");
-  const protocol = request.headers.get("x-forwarded-proto");
-
-  if (!host || !protocol || host.includes(",") || protocol.includes(",")) {
+/**
+ * Returns an exact, canonical HTTPS origin suitable for the production
+ * allowlist. `URL#origin` canonicalizes host casing and default ports, so the
+ * input must already equal it rather than merely normalizing to it.
+ */
+function canonicalHttpsOrigin(value: string): string | null {
+  if (!value || value.includes("*") || value.includes(",")) {
     return null;
   }
 
   try {
-    const url = new URL(`${protocol.toLowerCase()}://${host}`);
-    return !url.username && !url.password ? url.origin : null;
+    const url = new URL(value);
+
+    if (
+      url.protocol !== "https:" ||
+      url.username ||
+      url.password ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash ||
+      value !== url.origin
+    ) {
+      return null;
+    }
+
+    return url.origin;
   } catch {
     return null;
-  }
-}
-
-function reportRejectedOrigin(diagnostic: RejectedOriginDiagnostic) {
-  if (process.env.ADMIN_ORIGIN_DIAGNOSTICS === "1") {
-    // Intentionally log only fixed stages and booleans: no origins, URLs,
-    // raw headers, cookies, credentials, request bodies, or provider details.
-    console.warn("[Admin Origin]", diagnostic);
   }
 }
 
 /**
- * This diagnostic-stage guard intentionally preserves the original acceptance
- * rule. Forwarded headers are observed only for diagnostics and never used to
- * authorize an admin mutation.
+ * Parses the comma-separated production allowlist without accepting a partly
+ * valid configuration. A duplicate indicates an ambiguous configuration, so
+ * fail closed instead of silently de-duplicating it.
+ */
+function trustedProductionOrigins(value = process.env.ADMIN_TRUSTED_ORIGINS) {
+  if (!value) return null;
+
+  const entries = value.split(",");
+  const origins = entries.map(canonicalHttpsOrigin);
+
+  if (origins.some((origin) => origin === null)) return null;
+
+  const trustedOrigins = origins as string[];
+  return new Set(trustedOrigins).size === trustedOrigins.length
+    ? new Set(trustedOrigins)
+    : null;
+}
+
+/**
+ * Protects cookie-authenticated admin mutations from cross-site requests.
+ *
+ * App Hosting sends the browser's hosted.app request to Cloud Run, where the
+ * internal request URL uses a run.app hostname. In production the browser's
+ * Origin is therefore checked against an explicit server-side allowlist, never
+ * against request URL, Host, or X-Forwarded-* headers. Development keeps the
+ * original same-origin comparison so local HTTP origins continue to work.
  */
 export function hasSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  const forwardedOrigin = getForwardedOrigin(request);
-  let requestUrlOrigin: string | null = null;
+  if (!origin) return false;
+
+  if (process.env.NODE_ENV === "production") {
+    const canonicalOrigin = canonicalHttpsOrigin(origin);
+    const trustedOrigins = trustedProductionOrigins();
+    return canonicalOrigin !== null && trustedOrigins?.has(canonicalOrigin) === true;
+  }
 
   try {
-    requestUrlOrigin = new URL(request.url).origin;
+    return origin === new URL(request.url).origin;
   } catch {
-    // Keep the original fail-closed behavior for malformed request URLs.
+    return false;
   }
-
-  const accepted = origin !== null && origin === requestUrlOrigin;
-
-  if (!accepted) {
-    reportRejectedOrigin({
-      stage: "admin_origin_rejected",
-      requestUrlOriginValid: requestUrlOrigin !== null,
-      originMatchesRequestUrl: origin !== null && origin === requestUrlOrigin,
-      forwardedHostPresent: request.headers.has("x-forwarded-host"),
-      forwardedProtoPresent: request.headers.has("x-forwarded-proto"),
-      forwardedOriginValid: forwardedOrigin !== null,
-      forwardedOriginMatchesOrigin: origin !== null && origin === forwardedOrigin,
-    });
-  }
-
-  return accepted;
 }

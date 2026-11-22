@@ -1,5 +1,6 @@
 import { AdminPageHeader } from "@/components/admin-shell";
 import { AdminHomepageEditor } from "@/components/admin-homepage-editor";
+import { AdminHomepageImageEditor } from "@/components/admin-homepage-image-editor";
 import { AdminSiteEditor } from "@/components/admin-site-editor";
 import { homepageContentRepository } from "@/lib/repositories/homepage-content-repository";
 import { siteSettingsRepository } from "@/lib/repositories/site-settings-repository";
@@ -17,6 +18,7 @@ export default async function AdminSitePage() {
       <AdminPageHeader eyebrow="Website" title="Website settings" />
       <AdminSiteEditor key={settings.revision} settings={settings} />
       <AdminHomepageEditor key={homepageContent.revision} content={homepageContent} />
+      <AdminHomepageImageEditor key={`images-${homepageContent.revision}`} content={homepageContent} />
     </>
   );
 }

@@ -13,6 +13,10 @@ export type UploadPhotoInput = {
   folder: string;
 };
 
+export type StoredHomepageImage = StoredPhoto & {
+  url: string;
+};
+
 export type ImageVariant = "thumbnail" | "gallery" | "preview";
 
 export interface MediaService {
@@ -26,3 +30,7 @@ export interface MediaService {
   deletePhoto(mediaKey: string): Promise<void>;
 }
 
+export interface HomepageImageMediaService {
+  uploadHomepageImage(input: UploadPhotoInput): Promise<StoredHomepageImage>;
+  deleteHomepageImage(mediaKey: string): Promise<void>;
+}

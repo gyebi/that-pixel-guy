@@ -141,6 +141,10 @@ test("a valid settings update publishes only public-safe fields and conflicts do
 test("public settings use the static fallback only when no singleton record exists and never expose revisions", () => {
   const fallback = toPublicSiteSettings(null);
   assert.equal(fallback.businessName, "That Pixel Guy");
+  assert.equal(fallback.publicEmail, "");
+  assert.equal(fallback.phoneNumber, null);
+  assert.equal(fallback.whatsAppNumber, null);
+  assert.equal(fallback.location, null);
   assert.equal("revision" in fallback, false);
   assert.equal("id" in fallback, false);
 

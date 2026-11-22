@@ -1,3 +1,5 @@
+import type { HomepageImageFields } from "./homepage-image-types";
+
 export const HOMEPAGE_CONTENT_ID = "homepage";
 export const HOMEPAGE_CONTENT_CACHE_TAG = "homepage-content";
 
@@ -21,9 +23,9 @@ export type HomepageContentInput = {
   contactCtaLabel: string;
 };
 
-export type HomepageContentRecord = HomepageContentInput & {
+export type HomepageContentRecord = HomepageContentInput & HomepageImageFields & {
   id: string;
   revision: number;
 };
 
-export type PublicHomepageContent = HomepageContentInput;
+export type PublicHomepageContent = HomepageContentInput & HomepageImageFields;

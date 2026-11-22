@@ -10,6 +10,7 @@ import {
 } from "./cloudinary-thumbnail-options";
 import type {
   ImageVariant,
+  HomepageImageMediaService,
   MediaService,
   StoredPhoto,
   UploadPhotoInput,
@@ -110,6 +111,66 @@ async function deleteCloudinaryPhoto(mediaKey: string): Promise<void> {
     throw new Error("Unable to delete Cloudinary image.");
   }
 }
+
+async function deleteCloudinaryHomepageImage(mediaKey: string): Promise<void> {
+  const cloudinary = getCloudinary();
+  const result = await cloudinary.uploader.destroy(mediaKey, {
+    resource_type: "image",
+    type: "upload",
+    invalidate: true,
+  });
+
+  if (result.result !== "ok" && result.result !== "not found") {
+    throw new Error("Unable to delete Cloudinary homepage image.");
+  }
+}
+
+export const cloudinaryHomepageImageService: HomepageImageMediaService = {
+  async uploadHomepageImage(input) {
+    const cloudinary = getCloudinary();
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: "image",
+          type: "upload",
+          folder: input.folder,
+          use_filename: false,
+          unique_filename: true,
+          overwrite: false,
+          discard_original_filename: true,
+          allowed_formats: ["jpg", "png", "webp"],
+        },
+        (error, upload) => {
+          if (error) reject(error);
+          else if (!upload) reject(new Error("Cloudinary returned no upload result."));
+          else resolve(upload);
+        },
+      );
+      Readable.from(input.buffer).pipe(stream);
+    });
+
+    if (
+      result.type !== "upload" ||
+      typeof result.secure_url !== "string" ||
+      result.secure_url.length === 0 ||
+      typeof result.public_id !== "string" ||
+      result.public_id.length === 0
+    ) {
+      throw new Error("Cloudinary returned an invalid homepage image.");
+    }
+
+    return {
+      mediaKey: result.public_id,
+      url: result.secure_url,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      bytes: result.bytes,
+    };
+  },
+
+  deleteHomepageImage: deleteCloudinaryHomepageImage,
+};
 
 export const cloudinaryService: MediaService = {
   async uploadPhoto(input: UploadPhotoInput): Promise<StoredPhoto> {

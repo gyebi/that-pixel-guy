@@ -12,6 +12,7 @@ import {
   HOMEPAGE_CONTENT_CACHE_TAG,
   HOMEPAGE_CONTENT_ID,
 } from "@/lib/homepage/homepage-content-types";
+import type { HomepageImageSlot } from "@/lib/homepage/homepage-image-types";
 
 export {
   createHomepageContentRepository,
@@ -38,6 +39,18 @@ const homepageContentSelect = {
   contactEyebrow: true,
   contactHeading: true,
   contactCtaLabel: true,
+  heroImageUrl: true,
+  heroImageAlt: true,
+  workWeddingImageUrl: true,
+  workWeddingImageAlt: true,
+  workPortraitImageUrl: true,
+  workPortraitImageAlt: true,
+  workFamilyImageUrl: true,
+  workFamilyImageAlt: true,
+  serviceImageUrl: true,
+  serviceImageAlt: true,
+  contactImageUrl: true,
+  contactImageAlt: true,
   revision: true,
 } as const;
 
@@ -62,6 +75,22 @@ const store: HomepageContentStore = {
     return prisma.homepageContent.updateMany({
       where: { id: HOMEPAGE_CONTENT_ID, revision: expectedRevision },
       data: { ...input, revision: { increment: 1 } },
+    });
+  },
+
+  updateImage(slot: HomepageImageSlot, imageUrl: string, imageAlt: string, expectedRevision: number) {
+    const imageData = {
+      hero: { heroImageUrl: imageUrl, heroImageAlt: imageAlt },
+      workWedding: { workWeddingImageUrl: imageUrl, workWeddingImageAlt: imageAlt },
+      workPortrait: { workPortraitImageUrl: imageUrl, workPortraitImageAlt: imageAlt },
+      workFamily: { workFamilyImageUrl: imageUrl, workFamilyImageAlt: imageAlt },
+      service: { serviceImageUrl: imageUrl, serviceImageAlt: imageAlt },
+      contact: { contactImageUrl: imageUrl, contactImageAlt: imageAlt },
+    } as const;
+
+    return prisma.homepageContent.updateMany({
+      where: { id: HOMEPAGE_CONTENT_ID, revision: expectedRevision },
+      data: { ...imageData[slot], revision: { increment: 1 } },
     });
   },
 };

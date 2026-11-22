@@ -6,6 +6,7 @@ import {
   createHomepageContentRepository,
   toPublicHomepageContent,
 } from "@/lib/homepage/homepage-content-repository-core";
+import { emptyHomepageImageFields } from "@/lib/homepage/homepage-image-types";
 import {
   homepageContentPublicPaths,
   invalidatePublishedHomepageContent,
@@ -47,7 +48,11 @@ test("homepage singleton initializes once and updates atomically by revision", a
     },
     update: async (expectedRevision, input) => {
       if (!current || current.revision !== expectedRevision) return { count: 0 };
-      current = { id: "homepage", revision: current.revision + 1, ...input };
+      current = { ...current, revision: current.revision + 1, ...input };
+      return { count: 1 };
+    },
+    updateImage: async (_slot, _imageUrl, _imageAlt, expectedRevision) => {
+      if (!current || current.revision !== expectedRevision) return { count: 0 };
       return { count: 1 };
     },
   });
@@ -64,6 +69,41 @@ test("homepage singleton initializes once and updates atomically by revision", a
   assert.equal(updated.kind, "updated");
   if (updated.kind === "updated") assert.equal(updated.settings.revision, 2);
   assert.equal((await repository.update(validInput, 1)).kind, "conflict");
+});
+
+test("concurrent homepage image replacements use the revision guard so only one can publish", async () => {
+  let current: HomepageContentRecord = {
+    id: "homepage",
+    revision: 1,
+    ...validInput,
+    ...emptyHomepageImageFields(),
+  };
+  const repository = createHomepageContentRepository({
+    find: async () => current,
+    initialize: async () => current,
+    update: async () => ({ count: 0 }),
+    updateImage: async (_slot, imageUrl, imageAlt, expectedRevision) => {
+      await Promise.resolve();
+      if (current.revision !== expectedRevision) return { count: 0 };
+      current = {
+        ...current,
+        heroImageUrl: imageUrl,
+        heroImageAlt: imageAlt,
+        revision: current.revision + 1,
+      };
+      return { count: 1 };
+    },
+  });
+
+  const [first, second] = await Promise.all([
+    repository.updateImage("hero", "https://images.example/one.jpg", "First replacement", 1),
+    repository.updateImage("hero", "https://images.example/two.jpg", "Second replacement", 1),
+  ]);
+
+  assert.deepEqual([first.kind, second.kind].sort(), ["conflict", "updated"]);
+  assert.equal(current.revision, 2);
+  assert.equal(current.heroImageUrl, "https://images.example/one.jpg");
+  assert.equal(current.heroImageAlt, "First replacement");
 });
 
 test("homepage mutations reject unauthenticated, cross-origin, malformed, oversized, and unexpected payloads", async () => {
@@ -129,12 +169,12 @@ test("homepage updates normalize permitted heading line breaks, publish once, an
 
 test("public homepage content falls back safely and excludes internal singleton fields", () => {
   const fallback = toPublicHomepageContent(null);
-  assert.deepEqual(fallback, validInput);
+  assert.deepEqual(fallback, { ...validInput, ...emptyHomepageImageFields() });
   assert.equal("id" in fallback, false);
   assert.equal("revision" in fallback, false);
 
-  const projected = toPublicHomepageContent({ id: "homepage", revision: 3, ...validInput });
-  assert.deepEqual(projected, validInput);
+  const projected = toPublicHomepageContent({ id: "homepage", revision: 3, ...validInput, ...emptyHomepageImageFields() });
+  assert.deepEqual(projected, { ...validInput, ...emptyHomepageImageFields() });
 });
 
 test("homepage saves invalidate only the homepage content tag and route", () => {
@@ -148,18 +188,20 @@ test("homepage saves invalidate only the homepage content tag and route", () => 
   assert.deepEqual(paths, [...homepageContentPublicPaths]);
 });
 
-test("homepage keeps fixed CTA destinations, images, layout classes, and static collection data", async () => {
-  const [page, css] = await Promise.all([
+test("homepage uses persisted image replacements while retaining the established layout and copy controls", async () => {
+  const [page, siteContent, css] = await Promise.all([
     readFile("app/page.tsx", "utf8"),
+    readFile("lib/site-content.ts", "utf8"),
     readFile("app/globals.css", "utf8"),
   ]);
-  assert.match(page, /href="#contact"/);
+  assert.match(page, /contact\.email \? <a href="#contact"/);
   assert.match(page, /href="#portfolio"/);
-  assert.match(page, /href=\{`mailto:\$\{settings\.publicEmail\}`\}/);
+  assert.match(page, /href=\{contact\.email\.href\}/);
+  assert.match(page, /getHomepageImage/);
   assert.match(css, /celebration-hero\.jpg/);
   assert.match(css, /celebration-contact\.jpg/);
-  assert.match(page, /portfolioCategories\.map/);
-  assert.match(page, /journalPosts\.map/);
-  assert.match(page, /testimonials\[0\]/);
+  assert.match(page, /selectedWork\.map/);
+  assert.doesNotMatch(page, /journalPosts|testimonials|Testimonial/);
+  assert.doesNotMatch(siteContent, /38 stories|24 stories|16 stories/);
   assert.match(page, /className="homepage-managed-heading"/);
 });

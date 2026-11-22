@@ -157,7 +157,7 @@ export function AdminHomepageEditor({ content }: { content: HomepageContentRecor
         <div>
           <p className="admin-eyebrow">Published homepage content</p>
           <h2>Homepage copy</h2>
-          <p>CTA destinations, imagery, portfolio cards, journal entries, testimonials, and services remain unchanged.</p>
+          <p>Update the approved copy in its existing homepage positions. CTA destinations and page structure remain unchanged.</p>
         </div>
       </div>
 
